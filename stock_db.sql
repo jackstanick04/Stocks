@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS test (
 );
 
 -- just inserting values
-INSERT OR IGNORE INTO test (name)
+INSERT INTO test (name)
 VALUES ('Jack');
 
 

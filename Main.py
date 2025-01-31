@@ -21,7 +21,7 @@ cursor.execute("SELECT * FROM test")
 initial = cursor.fetchall()
 
 # execute a change that modifies the table (insert row) so needs to be committed to data base
-cursor.execute("INSERT OR IGNORE INTO test (name) VALUES ('Kate')")
+cursor.execute("INSERT INTO test (name) VALUES ('Kate')")
 connect.commit()
 
 # store the next table
