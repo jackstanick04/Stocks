@@ -6,9 +6,10 @@ from Database import Database
 
 # make database object and test methods
 db = Database("stock_db.db")
-db.clear()
 db.initial_table()
-db.test_method()
+db.print_table("companies")
+db.print_table("shares")
+db.close()
 
 
 
