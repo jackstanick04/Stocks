@@ -10,11 +10,6 @@ class Database :
     def __init__ (self, name_db) :
         self.connect = sqlite3.connect(name_db)
         self.cursor = self.connect.cursor()
-
-    # clear table so data does not continue stacking (temporary)
-    def clear (self) :
-        self.cursor.execute("DELETE FROM test")
-        self.connect.commit()
     
     # code to set up the initial table
     def initial_table (self) :
@@ -23,25 +18,7 @@ class Database :
             sql_data = sql_file.read()
         # have the cursor execute the prewritten script and then connect and update to the database
         self.cursor.executescript(sql_data)
-        self.connect.commit
-
-    # test method to see if we can link python and sql (we can)
-    def test_method (self) :
-        # select and store initial data from database
-        self.cursor.execute("SELECT * FROM test")
-        initial = self.cursor.fetchall()
-
-        self.print_table("test")
-
-        # execute a change that modifies the table (insert row) so needs to be committed to data base
-        self.cursor.execute("INSERT INTO test (name) VALUES ('Kate')")
         self.connect.commit()
-
-        # store the next table
-        self.cursor.execute("SELECT * FROM test")
-        second = self.cursor.fetchall()
-
-        self.print_table("test")
     
     # closes connect
     def close (self) :
@@ -58,7 +35,6 @@ class Database :
         # loop through every row of tuples and print
         for row in rows :
             print(row)
-
 
 
 
