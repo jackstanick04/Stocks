@@ -24,17 +24,28 @@ class Database :
     def close (self) :
         self.connect.close()
 
-    # print method just as tuples for rows (not pretty)
-    def print_table (self, table_name) :
-        # use string formatting to get the query (curly braces and f are types of formatting)
-        table = f"SELECT * FROM {table_name}"
-        # execute and store the selec
-        self.cursor.execute(table)
-        rows = self.cursor.fetchall()
+    # print method with column names 
+    def print_pretty (self) :
+        # fixed width for each column
+        width = 18
 
-        # loop through every row of tuples and print
+        # store the column names in a list with list comprehension (the cursor execute will store the desired table (in main), and then the first element of every column description is the name of the column)
+        column_names = [desc [0] for desc in self.cursor.description]
+        # formatting the column names using ljust (fills with extra spaces to twelve for every column in the column array) and then joining each
+        col_names = "".join([col_new.ljust(width) for col_new in column_names])
+        print("\n" + col_names + "\n")
+        
+        # store list of every tuple of table using fetchall 
+        rows = self.cursor.fetchall()
+        # formatting each row same idea just with a loop
         for row in rows :
-            print(row)
+            # each row joins each value of the tuple casted as a string with appropriate spacing
+            new_row = "".join([str(val).ljust(width) for val in row])
+            print(new_row)
+        print()
+
+        
+
 
 
 
