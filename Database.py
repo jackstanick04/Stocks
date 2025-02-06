@@ -44,6 +44,43 @@ class Database :
             print(new_row)
         print()
 
+    # function to run the program
+    def run (self) :
+        # have a flag variable for the loop to run on (only turns false when they exit)
+        flag = True
+        while flag :
+            # take in user input as a string
+            print("-1 : Quit. 1 : Analyze one company. 2 : Analyze two companies. 3 : Analyze all companies.")
+            choice = input("Please enter your choice: ")
+
+            # all comparisons will be with strings since input takes in strings
+            # if -1 exit the loop by inverting the flag
+            if choice == "-1" : 
+                print("Exiting the program.")
+                flag = False
+            # elif for the different db methods to run
+            elif choice == "1" : 
+                self.oneComp()
+            elif choice == "2" : 
+                self.twoComp()
+            elif choice == "3" : 
+                self.allComp()
+            # else to rerun the loop with no action because invalid input
+            else : 
+                print("Please enter valid input.")
+        
+    # general function for one company
+    def oneComp (self) :
+        print("One Company")
+    
+    # general function for two companies
+    def twoComp (self) :
+        print("Two Companies")
+    
+    # general function for one company
+    def allComp (self) :
+        print("All Companies")
+
         
 
 
