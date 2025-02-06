@@ -7,7 +7,11 @@ from Database import Database
 # make database object and test methods
 db = Database("stock_db.db")
 db.initial_table()
+db.run()
 db.close()
+
+
+
 
 
 
