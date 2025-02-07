@@ -24,8 +24,8 @@ class Database :
     def close (self) :
         self.connect.close()
 
-    # print method with column names 
-    def print_pretty (self) :
+    # print method with column names (works for any selected data table that is stored in the cursor)
+    def print_pretty_all (self) :
         # fixed width for each column
         width = 18
 
@@ -68,10 +68,44 @@ class Database :
             # else to rerun the loop with no action because invalid input
             else : 
                 print("Please enter valid input.")
+
+    def print_companies (self) :
+        # query to just have the company id and the company name
+        query = """
+        SELECT id,
+            name,
+            ticker
+        FROM companies"""
+        # execute the query and print it (print will do the current thing stored in cursor (which is the execution))
+        self.cursor.execute(query)
+        self.print_pretty_all()
+    
+    # takes in a company id and returns the tuple with the name, ticker, and avg price
+    def avg_one (self, company_id) :
+        # execute the average command using a place holder (?) for the python company parameter
+        # join the tables for proper output on primary/foreign key and group by the company id to select the average
+        query = """
+        SELECT companies.ticker,
+            ROUND(AVG(shares.price), 2) AS 'Average Price'
+        FROM shares
+        JOIN companies
+            ON shares.company_id = companies.id
+        WHERE shares.company_id = ?
+        GROUP BY companies.id"""
+        # execute the query, no need to return since the cursor instance variable stores the desired results
+        self.cursor.execute(query, (company_id,))
         
     # general function for one company
     def oneComp (self) :
-        print("One Company")
+       # ask the user for which company they would like to operate on
+       self.print_companies()
+       # oppurtunity to validate input
+       choice = int(input("Please enter the company id: "))
+
+       # call the average company with the desired company (will be stored to the cursor, and then the print method will print the cursor storage)
+       # WILL HAVE LOGIC ASKING FOR WHAT METHOD TO CALL IN FUTURE
+       self.avg_one(choice)
+       self.print_pretty_all()
     
     # general function for two companies
     def twoComp (self) :
