@@ -214,14 +214,65 @@ class Database :
         self.cursor.execute(query, (company_id,))
         self.print_pretty_all()
 
+    # code for standard deviation
     def std_one (self, company_id) :
-        print("std one")
-
+        # query utilizes a subquery to have a table of all prices and the average price for all years in the given company
+        # outside query then performs a sum of all prices - average quantity squarred, then divides and takes square root for the std 
+        query = """
+        SELECT companies.ticker,
+            ROUND(SQRT(SUM((price - avg_price) * (price - avg_price)) / (COUNT(*) - 1)), 2) AS std_deve
+        FROM (
+            -- get price for every share in the company id
+            SELECT price,
+                -- subquery to find the average price from the given company id
+                (SELECT AVG(price) AS 'avg_price' FROM shares WHERE company_id = ?) AS avg_price
+            FROM shares
+            WHERE company_id = ?
+        ) AS avg_finder
+        -- joining comapnies where the company id is the desired id only (dont really need to do it for other entries)
+        JOIN companies
+            ON companies.id = ?
+        """
+        self.cursor.execute(query, (company_id, company_id, company_id))
+        self.print_pretty_all()
+        
+    # method to show the dollar and percent increase 
     def inc_one (self, company_id) :
-        print("inc one")
+        query = """
+        -- select the ticker, year, price, dollar increase, percent increase
+        SELECT companies.ticker,
+            shares.year,
+            shares.price,
+            -- lag function to find change in price
+            ROUND((shares.price - LAG(shares.price) OVER (PARTITION BY shares.company_id ORDER BY shares.year)), 2) AS dollar_increase,
+            -- longer use of lag functions to find percent change (difference divided by previous price)
+            ROUND(((shares.price - LAG(shares.price) OVER (PARTITION BY shares.company_id ORDER BY shares.year)) / 
+                LAG(shares.price) OVER (PARTITION BY shares.company_id ORDER BY shares.year)) * 100, 2) AS percent_increase
+        FROM shares
+        JOIN companies
+            ON shares.company_id = companies.id
+        WHERE shares.company_id = ?
+        """
+        self.cursor.execute(query, (company_id,))
+        self.print_pretty_all()
 
+    # rank function not too hard 
     def rank_one (self, company_id) :
-        print("rank one")
+        query = """
+        -- data to be selected
+        SELECT companies.ticker,
+            -- ranked descending, partitioned by company, and order by price
+            RANK() OVER (PARTITION BY shares.company_id ORDER BY shares.price DESC) AS price_rank,
+            shares.year,
+            shares.price
+        FROM shares
+        -- joined and only the desired company
+        JOIN companies
+            ON shares.company_id = companies.id
+        WHERE shares.company_id = ?
+        """
+        self.cursor.execute(query, (company_id,))
+        self.print_pretty_all()
 
     # general function for two companies
     def twoComp (self) :
