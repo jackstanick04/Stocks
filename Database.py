@@ -69,6 +69,17 @@ class Database :
             else : 
                 print("Please enter valid input.")
 
+    def print_companies (self) :
+            # query to just have the company id and the company name
+            query = """
+            SELECT id,
+                name,
+                ticker
+            FROM companies"""
+            # execute the query and print it (print will do the current thing stored in cursor (which is the execution))
+            self.cursor.execute(query)
+            self.print_pretty_all()
+
     # general function for one company
     def oneComp (self) :
        # ask the user for which company they would like to operate on
@@ -109,17 +120,6 @@ class Database :
                self.rank_one(company)
             case _ :
                print("Invalid. Ending selection process.")
-               
-    def print_companies (self) :
-        # query to just have the company id and the company name
-        query = """
-        SELECT id,
-            name,
-            ticker
-        FROM companies"""
-        # execute the query and print it (print will do the current thing stored in cursor (which is the execution))
-        self.cursor.execute(query)
-        self.print_pretty_all()
     
     # prints the different options that method one can do
     def print_options_one (self) :
@@ -276,8 +276,85 @@ class Database :
 
     # general function for two companies
     def twoComp (self) :
-        print("Two Companies")
+        # print and take in the company ids; oppurtunity to validate user input
+        self.print_companies()
+        comp_one = int(input("Please enter your first company id: "))
+        comp_two = int(input("Please enter your second company id: "))
+
+        # print the options and take in the choice
+        self.print_options_two()
+        choice = int(input("Please enter the action you would like: "))
+
+        # match statement on the choice to call each given method
+        match choice :
+            case 1 :
+                # take year in and then call method to find higher price in given year; validate input
+                year = int(input("Please enter the given year: "))
+                self.higher_two(year, comp_one, comp_two)
+            case 2 :
+                # method to find higher average price
+                self.avg_two(comp_one, comp_two)
+            case 3 :
+                # method to find higher standard deviation
+                self.std_two(comp_one, comp_two)
+            case 4 :
+                # method to find higher max price
+                self.max_two(comp_one, comp_two)
+            case 5 :
+                # method to find lower min price
+                self.min_two(comp_one, comp_two)
+            case _ :
+                # default (not right input)
+                print("Invalid input. Ending selection process.")
+
+    # prints the different options that the two company method can call
+    def print_options_two (self) :
+        print("\nPlease enter the number that corresponds to what you would like to do between two companies: ")
+        print("1. Find the higher price for a given year.")
+        print("2. Find the higher average price.")
+        print("3. Find the higher standard deviation.")
+        print("4. Find the higher maximum price.")
+        print("5. Find the lower minimum price.")
+
+    # method to find higher price in given year
+    def higher_two (self, year, comp_one, comp_two) :
+        print("higher")
     
+    # method to find higher average price 
+    def avg_two (self, comp_one, comp_two) :
+        # average query with comments within
+        query = """
+        -- temporary table, selects the company id and the average price (grouped on company id) for the desired companies
+        WITH avg_prices AS (
+            SELECT company_id,
+                AVG(price) AS avg_price
+            FROM shares
+            WHERE company_id = ? OR company_id = ?
+            GROUP BY company_id
+        )
+        -- select and join the companies table for ticker, and then the average price only for the max average price from the subquery (shown in bottom line)
+        SELECT companies.ticker,
+            avg_prices.avg_price
+        FROM avg_prices
+        JOIN companies
+            ON avg_prices.company_id = companies.id
+        WHERE avg_prices.avg_price = (SELECT MAX(avg_price) FROM avg_prices)
+        """
+        self.cursor.execute(query, (comp_one, comp_two))
+        self.print_pretty_all()
+
+    # method to find the greater standard deviation
+    def std_two (self, comp_one, comp_two) :
+        print("std")
+
+    # method to find the higher max price
+    def max_two (self, comp_one, comp_two) :
+        print("max")
+
+    # method to find the lower min price
+    def min_two (self, comp_one, comp_two) :
+        print("min")
+
     # general function for one company
     def allComp (self) :
         print("All Companies")
