@@ -549,12 +549,53 @@ class Database :
 
     # method for highest prices across all years, no company id needed
     def highest_all_all (self) :
-        print("highest")
+        # query for max price
+        query = """
+        -- temporary table to store the max price for each company
+        WITH maxes AS (
+            SELECT company_id,
+                year,
+                MAX(price) AS max
+            FROM shares
+            GROUP BY 1
+        )
+        -- take the rank of the max prices, the price, and then the company id and orders it based on the max values
+        SELECT RANK () OVER (ORDER BY maxes.max DESC) AS rank,
+            companies.ticker,
+            maxes.year,
+            maxes.max
+        FROM maxes
+        JOIN companies
+            ON maxes.company_id = companies.id
+        """
+
+        # select and print
+        self.cursor.execute(query)
+        self.print_pretty_all()
 
     # method for ranking across a year, year is the only paramters needed
     def highest_all_year (self, year) :
-        print(year)
+        # query, uses placeholder for year
+        query = """
+        -- temporary table to select the price for each company for the given year
+        WITH prices AS (
+            SELECT company_id,
+                price
+            FROM shares
+            WHERE year = ?
+        )
+        -- rank the prices for the given year, similar query to rank over all years method
+        SELECT RANK () OVER (ORDER BY prices.price DESC) AS rank,
+            companies.ticker,
+            prices.price
+        FROM prices
+        JOIN companies
+            ON prices.company_id = companies.id
+        """
 
+        # execute nd print the method
+        self.cursor.execute(query, (year,))
+        self.print_pretty_all()
         
 
 
