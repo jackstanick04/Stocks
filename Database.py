@@ -96,7 +96,7 @@ class Database :
             case 1 : 
                # take in the year and then call method; spot to validate input
                year = int(input("What year would you like to see (2015 - 2024): "))
-               self.prices_one_year(company, year)
+               print(self.prices_one_year(company, year))
             case 2 :
                # call method to see prices for every year
                self.prices_one_all(company)
@@ -181,7 +181,10 @@ class Database :
         GROUP BY companies.id"""
         # execute the query and print, no need to return since the cursor instance variable stores the desired results
         self.cursor.execute(query, (company_id,))
+        # store and return the value
+        result = self.cursor.fetchone()
         self.print_pretty_all()
+        return result [0]
 
     # selects and prints the ticker, year, and maximum price of a company
     def max_one (self, company_id) :
@@ -318,7 +321,30 @@ class Database :
 
     # method to find higher price in given year
     def higher_two (self, year, comp_one, comp_two) :
-        print("higher")
+        # sql query
+        query = """
+        -- temprorary table to find the max prices for the given comapnies in the year
+        WITH max_prices AS (
+            -- select desired data from joined table
+            SELECT companies.ticker,
+                shares.year,
+                shares.price
+            FROM shares
+            JOIN companies
+                ON shares.company_id = companies.id
+            -- filter to only the price with the given year or company
+            WHERE year = ? AND (shares.company_id = ? OR shares.company_id = ?) 
+        )
+        SELECT ticker,
+            year,
+            price
+        FROM max_prices
+        -- way to take the max price
+        ORDER BY 3 DESC
+        LIMIT 1
+        """
+        self.cursor.execute(query, (year, comp_one, comp_two))
+        self.print_pretty_all()
     
     # method to find higher average price 
     def avg_two (self, comp_one, comp_two) :
@@ -345,15 +371,90 @@ class Database :
 
     # method to find the greater standard deviation
     def std_two (self, comp_one, comp_two) :
-        print("std")
+        # sql query, uses multiple subqueries
+        query = """
+        -- table to find the means and company id for the given companeis
+        WITH means AS (
+            SELECT shares.company_id,
+                AVG(shares.price) AS mean
+            FROM shares
+            WHERE shares.company_id = ? OR shares.company_id = ?
+            GROUP BY 1
+        ),
+        -- table to find standard deviations
+        stds AS (
+            SELECT shares.company_id,
+                --calculation (we know formula, basically just uses the joined row to get the price and mean)
+                ROUND(SQRT(SUM((shares.price - means.mean) * (shares.price - means.mean)) / (COUNT(*) - 1)), 2) AS std
+            FROM shares
+            -- joining so every row has both the current price and the mean
+            JOIN means
+                ON shares.company_id = means.company_id
+            WHERE shares.company_id = ? OR shares.company_id = ?
+            GROUP BY shares.company_id
+        )
+        -- select the std and then the company ticker by joining the companies table on the stds table where company id are equal
+        SELECT companies.ticker,
+            stds.std
+        FROM stds
+        JOIN companies
+            ON stds.company_id = companies.id
+        -- only take highest
+        ORDER BY 2 DESC
+        LIMIT 1
+        """
+        self.cursor.execute(query, (comp_one, comp_two, comp_one, comp_two))
+        self.print_pretty_all()
 
     # method to find the higher max price
     def max_two (self, comp_one, comp_two) :
-        print("max")
+        # sql query, similar to the higher price of a given year
+        query = """
+        -- subquery to find the max price for the given companies
+        WITH maxes AS (
+            -- taking joined ticker from companies and max price from the desired tables using group
+            SELECT companies.ticker,
+                MAX(shares.price) AS max
+            FROM shares
+            JOIN companies
+                ON shares.company_id = companies.id
+            WHERE shares.company_id = ? OR shares.company_id = ?
+            GROUP BY shares.company_id
+        )
+        SELECT ticker,
+            max
+        FROM maxes
+        -- only take the highest
+        ORDER BY max DESC
+        LIMIT 1
+        """
+        self.cursor.execute(query, (comp_one, comp_two))
+        self.print_pretty_all()
 
     # method to find the lower min price
     def min_two (self, comp_one, comp_two) :
-        print("min")
+        # nearly identical to the find max, just finding each minimum and selecting lower from there
+        query = """
+        -- subquery to find the max price for the given companies
+        WITH mins AS (
+            -- taking joined ticker from companies and min price from the desired tables using group
+            SELECT companies.ticker,
+                MIN(shares.price) AS min
+            FROM shares
+            JOIN companies
+                ON shares.company_id = companies.id
+            WHERE shares.company_id = ? OR shares.company_id = ?
+            GROUP BY shares.company_id
+        )
+        SELECT ticker,
+            min
+        FROM mins
+        -- only take the lowest
+        ORDER BY min
+        LIMIT 1
+        """
+        self.cursor.execute(query, (comp_one, comp_two))
+        self.print_pretty_all()
 
     # general function for one company
     def allComp (self) :
