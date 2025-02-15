@@ -223,7 +223,7 @@ class Database :
         # outside query then performs a sum of all prices - average quantity squarred, then divides and takes square root for the std 
         query = """
         SELECT companies.ticker,
-            ROUND(SQRT(SUM((price - avg_price) * (price - avg_price)) / (COUNT(*) - 1)), 2) AS std_deve
+            ROUND ( SQRT ( SUM ( (price - avg_price) * (price - avg_price) ) / (COUNT(*) - 1) ), 2 ) AS std_deve
         FROM (
             -- get price for every share in the company id
             SELECT price,
@@ -385,7 +385,7 @@ class Database :
         stds AS (
             SELECT shares.company_id,
                 --calculation (we know formula, basically just uses the joined row to get the price and mean)
-                ROUND(SQRT(SUM((shares.price - means.mean) * (shares.price - means.mean)) / (COUNT(*) - 1)), 2) AS std
+                ROUND( SQRT (SUM ( (shares.price - means.mean) * (shares.price - means.mean) ) / (COUNT(*) - 1) ), 2 ) AS std
             FROM shares
             -- joining so every row has both the current price and the mean
             JOIN means
@@ -458,7 +458,102 @@ class Database :
 
     # general function for one company
     def allComp (self) :
-        print("All Companies")
+        # no need to take company choice input, rather just print and selec the desired task
+        self.print_options_all()
+        choice = int(input("Please enter your selection: "))
+
+        # match statement based on choice; oppurtunity to validate input
+        match choice :
+            case 1 :
+                # method for average rank
+                self.avg_all()
+            case 2 :
+                # method for std rank
+                self.std_all()
+            case 3 :
+                # method for highest prices rank
+                self.highest_all_all()
+            case 4 :
+                # input and method to rank prices in a given year; chance to validate input
+                year = int(input("Please enter a year: "))
+                self.highest_all_year(year)
+            case _ :
+                # default
+                print("Invalid choice, ending program.")
+
+    # function to print all company options
+    def print_options_all (self) :
+        print("\nPlease select the option that you would like to complete: ")
+        print("1. Rank the average stock prices.")
+        print("2. Rank the standard deviations.")
+        print("3. Rank the highest price for each company across all years.")
+        print("4. Rank the prices for each company in a given year.")
+    
+    # method for ranking average of all, no company id paramter needed
+    def avg_all (self) :
+        # query for avg prices
+        query = """
+        -- temporary table which holds the average price for every company
+        WITH avg_prices AS (
+            SELECT company_id,
+                AVG(price) AS avg
+            FROM shares
+            GROUP BY 1
+        )
+        -- rank by the average prices, and select the tickers and rounded price
+        SELECT RANK () OVER (ORDER BY avg DESC) AS ranking,
+            companies.ticker,
+            ROUND(avg_prices.avg, 2) AS avg
+        FROM avg_prices
+        JOIN companies
+            ON avg_prices.company_id = companies.id
+        """
+        
+        # execute commands
+        self.cursor.execute(query)
+        self.print_pretty_all()
+
+    # method for ranking std of all, no company id paramter needed
+    def std_all (self) :
+        # query for standard deviation, very similar to the two company version
+        query = """
+        -- temporary table to store the average of each company
+        WITH avgs AS (
+            SELECT company_id,
+                AVG(price) AS avg
+            FROM shares
+            GROUP BY 1
+        ),
+        stds AS (
+            -- select the company id, and std
+            SELECT shares.company_id,
+                ROUND ( SQRT ( SUM ( (shares.price - avgs.avg) * (shares.price - avgs.avg) ) / (COUNT(*) - 1) ), 2 ) AS std
+            FROM avgs
+            -- basically gives every price the average for the given company next to it, which we then sum the deviations per each company to calculate
+            JOIN shares
+                ON avgs.company_id = shares.company_id
+            GROUP BY 1
+        )
+        -- just rank the deviations descending
+        SELECT RANK () OVER (ORDER BY std DESC) AS rank,
+            companies.ticker,
+            stds.std
+        FROM stds
+        JOIN companies
+            ON stds.company_id = companies.id
+        """
+
+        # execute and print
+        self.cursor.execute(query)
+        self.print_pretty_all()
+
+    # method for highest prices across all years, no company id needed
+    def highest_all_all (self) :
+        print("highest")
+
+    # method for ranking across a year, year is the only paramters needed
+    def highest_all_year (self, year) :
+        print(year)
 
         
 
