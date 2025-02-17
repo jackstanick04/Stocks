@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS shares (
 );
 
 -- bulk insert statement for each company separately (for organization)
--- real data from past ten years prices, and then the current price as of 2/2/2025
+-- real data from past ten years prices, and then the marker cap above as of 2/2/2025
 
 -- amazon
 INSERT INTO shares (share_id, year, company_id, price) VALUES
